@@ -1,8 +1,10 @@
 {
 <#--- Store positional args in a WDL arg called "positionalArgs"--->
 <#assign positionalArgs="positionalArgs"/>
-  "${name}.docker_image": "String",
+  "${name}.dockerImage": "String",
   "${name}.gatk": "String",
+  "${name}.diskRequirements": "String",
+  "${name}.memoryRequirements": "String",
 <#assign remainingArgCount=arguments.required?size + arguments.optional?size + arguments.common?size/>
 <@taskinput heading="Positional Arguments" argsToUse=arguments.positional remainingCount=remainingArgCount/>
 <#assign remainingArgCount=arguments.optional?size + arguments.common?size/>
