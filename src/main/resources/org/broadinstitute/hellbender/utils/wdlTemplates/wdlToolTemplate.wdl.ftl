@@ -3,11 +3,11 @@ version 1.0
 <#--- Store positional args in a WDL arg called "positionalArgs"--->
 <#assign positionalArgs="positionalArgs"/>
 <#if beta?? && beta == true>
-# Run ${name} (**BETA**) (GATK Version ${version})
+# Run ${name} (**BETA**) (WDL auto generated from: GATK Version ${version})
 <#elseif experimental?? && experimental == true>
-# Run ${name} **EXPERIMENTAL** ${name} (GATK Version ${version})
+# Run ${name} **EXPERIMENTAL** ${name} (WDL auto generated from: GATK Version ${version})
 <#else>
-# Run ${name} (GATK Version ${version})
+# Run ${name} (WDL auto generated from: GATK Version ${version})
 </#if>
 #
 # ${summary}
