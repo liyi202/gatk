@@ -85,7 +85,7 @@ import org.broadinstitute.hellbender.utils.read.SAMFileGATKReadWriter;
         programGroup = ReadDataManipulationProgramGroup.class
 )
 @DocumentedFeature
-@RuntimeProperties(memoryRequirements = "1GB")
+@RuntimeProperties(memory = "1GB")
 public final class PrintReads extends ReadWalker {
 
     @WorkflowResource(input=false, output=true, companionResources={StandardArgumentDefinitions.OUTPUT_LONG_NAME + "companionIndex"})
