@@ -77,28 +77,34 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
 
     /**
      * Given a Java class representing the underlying field  type of an argument, and a human readable doc type,
-     * return a String with the corresponding WDL type.
+     * convert the docType to a WDL type.
      *
+     * @param workflowResource the WorkflowResource associated with the instance of argumentClass, if any
      * @param argumentClass the Class for the underlying field of the argument being converted
      * @param docType a string representing the human readable type assigned by the Barclay doc system
-     * @param contextMessage a message describing the context for this argument, used in error reporting
+     * @param sourceContext a String describing the context for this argument, used for error reporting
      * @return the docType string transformed to the corresponding WDL type
      */
     @Override
-    protected String convertJavaTypeToWDLType(final Class<?> argumentClass, final String docType, final String contextMessage) {
+    protected String convertJavaTypeToWDLType(
+            final WorkflowResource workflowResource,
+            final Class<?> argumentClass,
+            final String docType,
+            final String sourceContext) {
         String convertedWDLType;
         if (FeatureInput.class.isAssignableFrom(argumentClass)) {
             if (!docType.contains(FeatureInput.class.getSimpleName())) {
                 throw new GATKException(
                         String.format(
-                                "Don't know how to generate a WDL type for %s in work unit %s",
+                                "Don't know how to convert Java type %s in %s to a corresponding WDL type. " +
+                                        "The WDL generator type converter code must be updated to support this Java type.",
                                 argumentClass,
-                                contextMessage));
+                                sourceContext));
             }
             final Pair<String, String> typeConversionPair = transformToWDLType(argumentClass);
             convertedWDLType = docType.replaceFirst("FeatureInput\\[[a-zA-Z0-9?]+\\]", typeConversionPair.getValue());
         } else {
-            return super.convertJavaTypeToWDLType(argumentClass, docType, contextMessage);
+            return super.convertJavaTypeToWDLType(workflowResource, argumentClass, docType, sourceContext);
         }
         return convertedWDLType;
     }
