@@ -18,7 +18,7 @@ import java.util.Map;
  * by methods that are used by the GATK runtime. This class has a dependency on com.sun.javadoc classes,
  * which may not be present since they're not provided as part of the normal GATK runtime classpath.
  */
-public class GATKWDLDoclet extends HelpDoclet {
+public class GATKWDLDoclet extends WDLDoclet {
 
     // emit an index file with links to all of the .wdl files
     private final static String GATK_FREEMARKER_INDEX_TEMPLATE_NAME = "wdlIndexTemplate.html.ftl";
@@ -43,11 +43,11 @@ public class GATKWDLDoclet extends HelpDoclet {
         return GATK_FREEMARKER_INDEX_TEMPLATE_NAME;
     }
 
+    //TODO: remove this filter (method overload) once testing on all WDLs is completed
     @Override
     public boolean includeInDocs(final DocumentedFeature documentedFeature, final ClassDoc classDoc, final Class<?> clazz) {
         // for WDL gen, we want to filter out and DocumentedFeatures that are not CommandLinePrograms
-        return super.includeInDocs(documentedFeature, classDoc, clazz) &&
-                //TODO: restore this filter once testing on all WDLs is completed
+        return //super.includeInDocs(documentedFeature, classDoc, clazz) &&
                 //clazz.getAnnotation(RuntimeProperties.class) != null &&
                 clazz.getAnnotation(CommandLineProgramProperties.class) != null;
     }

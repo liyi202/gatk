@@ -103,10 +103,13 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
             }
             final Pair<String, String> typeConversionPair = transformToWDLType(argumentClass);
             convertedWDLType = docType.replaceFirst("FeatureInput\\[[a-zA-Z0-9?]+\\]", typeConversionPair.getValue());
-        } else {
-            return super.convertJavaTypeToWDLType(workflowResource, argumentClass, docType, sourceContext);
+
+            // finally, if this type is for an arg that is a WorkflowResource that is a workflow output, and its type
+            // is file, we need to use a different type (String) as the input type for this arg to prevent the workflow
+            // manager from attempting to localize the (non-existent) output file when localizing inputs
+            return transformWorkflowResourceOutputTypeToInputType(workflowResource, convertedWDLType);
         }
-        return convertedWDLType;
+        return super.convertJavaTypeToWDLType(workflowResource, argumentClass, docType, sourceContext);
     }
 
     /**

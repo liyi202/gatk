@@ -7,7 +7,6 @@
   "${name}.memoryRequirements": "${runtimeProperties.memoryRequirements}",
 <#else>
   "${name}.memoryRequirements": "String",
-</if>
 </#if>
 <#if runtimeProperties?? && runtimeProperties?size != 0 && runtimeProperties.diskRequirements != "">
   "${name}.diskRequirements": "${runtimeProperties.diskRequirements}",
@@ -53,7 +52,8 @@
 <#noparse>  "</#noparse>${name}.${arg.name?substring(2)}<#noparse>"</#noparse>: <#rt/>
       </#if>
       <#if heading?starts_with("Required") || heading?starts_with("Positional")>
-<#noparse>"</#noparse>${arg.type}<#noparse>"</#noparse><#if !arg?is_last || remainingCount != 0>,</#if>
+<#noparse>"</#noparse>${arg.wdlinputtype}<#noparse>"</#noparse><#if !arg?is_last || remainingCount != 0>,
+      </#if>
       <#else>
         <#if arg.defaultValue == "[]" || arg.defaultValue == "\"\"" || arg.defaultValue == "null">
 null<#if !arg?is_last || remainingCount != 0>,</#if>
