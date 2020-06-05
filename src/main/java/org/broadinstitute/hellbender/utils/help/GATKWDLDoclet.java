@@ -4,6 +4,7 @@ import com.sun.javadoc.ClassDoc;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import org.apache.commons.io.FilenameUtils;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.barclay.help.*;
 
@@ -85,22 +86,78 @@ public class GATKWDLDoclet extends WDLDoclet {
             final List<Map<String, String>> indexByGroupMaps,
             final List<Map<String, String>> featureMaps)
     {
+        final String defaultWDLFileName = workUnit.getTargetFileName();
+        final String defaultJSONFileName = workUnit.getJSONFileName();
+
+        // generate the default WDL and input JSON, containing only required args
+        exportWorkUnit(
+                cfg,
+                workUnit,
+                workUnit.getTemplateName(),
+                new File(getDestinationDir(), defaultWDLFileName));
+
+        // Rather than rely on the default Barclay behavior of creating an arguments JSON file, use a
+        // specialized template for WDL input JSONs to allow more control over the initial values. The
+        // default Barclay arguments JSON doesn't include the (non-tool) WDL inputs, such as runtime
+        // properties, and would provide the initial values for arguments everywhere, but for required
+        // args we want to use a String containing the expected type, like womtool does.
+        exportWorkUnit(
+                cfg,
+                workUnit,
+                "wdlJSONTemplate.json.ftl",
+                new File(getDestinationDir(), defaultJSONFileName));
+
+        // generate a second pair of file containing ALL arguments
+        exportWorkUnit(
+                cfg,
+                workUnit,
+                "wdlToolTemplateAllArgs.wdl.ftl",
+                new File(getDestinationDir(), getNameWithAllArgsSuffix(defaultWDLFileName)));
+
+        // Rather than rely on the default Barclay behavior of creating an arguments JSON file, use a
+        // specialized template for WDL input JSONs to allow more control over the initial values. The
+        // default Barclay arguments JSON doesn't include the (non-tool) WDL inputs, such as runtime
+        // properties, and would provide the initial values for arguments everywhere, but for required
+        // args we want to use a String containing the expected type, like womtool does.
+        exportWorkUnit(
+                cfg,
+                workUnit,
+                "wdlJSONTemplateAllArgs.json.ftl",
+                new File(getDestinationDir(), getNameWithAllArgsSuffix(defaultJSONFileName)));
+    }
+
+    /**
+     * Return a a version of the default name passed in with the suffix "AllArgs" added to the basename.
+     *
+     * @param defaultName the default name to modify
+     * @return a version of the default name passed in with the suffix "AllArgs" added to the basename
+     */
+    protected String getNameWithAllArgsSuffix(final String defaultName) {
+        final String baseName = FilenameUtils.getBaseName(defaultName);
+        final String extension = FilenameUtils.getExtension(defaultName);
+        return String.format("%sAllArgs.%s",
+                baseName,
+                extension);
+    }
+
+    /**
+     * Export the generated files from templates for a single work unit.
+     *
+     * @param cfg freemarker config
+     * @param workUnit the WorkUnit being processed
+     * @param wdlTemplateName name of the template to use
+     * @param wdlOutputPath output file
+     */
+    protected final void exportWorkUnit(
+            final Configuration cfg,
+            final DocWorkUnit workUnit,
+            final String wdlTemplateName,
+            final File wdlOutputPath) {
         try {
             // Merge data-model with wdl template
-            final Template wdlTemplate = cfg.getTemplate(workUnit.getTemplateName());
-            final File wdlOutputPath = new File(getDestinationDir(), workUnit.getTargetFileName());
+            final Template wdlTemplate = cfg.getTemplate(wdlTemplateName);
             try (final Writer out = new OutputStreamWriter(new FileOutputStream(wdlOutputPath))) {
                 wdlTemplate.process(workUnit.getRootMap(), out);
-            }
-
-            // Rather than rely on the default Barclay behavior of creating the JSON file directly, use a
-            // second template to allow more control over the initial values. Barlcay would provide the
-            // initial values everywhere, but for required args we want to use a String containing the
-            // expected type, like womtool does.
-            final Template jsonTemplate = cfg.getTemplate("wdlJSONTemplate.json.ftl");
-            final File jsonOutputPath = new File(getDestinationDir(), workUnit.getJSONFileName());
-            try (final Writer out = new OutputStreamWriter(new FileOutputStream(jsonOutputPath))) {
-                jsonTemplate.process(workUnit.getRootMap(), out);
             }
         } catch (IOException e) {
             throw new DocException("IOException during documentation creation", e);

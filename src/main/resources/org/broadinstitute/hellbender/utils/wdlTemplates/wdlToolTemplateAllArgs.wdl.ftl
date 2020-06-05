@@ -29,6 +29,13 @@ version 1.0
 <@addArgumentDescriptions heading="Required Tool Arguments" argsToUse=arguments.required/>
 #
 </#if>
+<#if arguments.optional?size != 0>
+<@addArgumentDescriptions heading="Optional Tool Arguments" argsToUse=arguments.optional/>
+#
+</#if>
+<#if arguments.common?size != 0>
+<@addArgumentDescriptions heading="Optional Common Arguments" argsToUse=arguments.common/>
+</#if>
 
 workflow ${name} {
 
@@ -49,6 +56,8 @@ workflow ${name} {
     String bootdisksizegbRequirements
     <@defineWorkflowInputs heading="Positional Arguments" argsToUse=arguments.positional/>
     <@defineWorkflowInputs heading="Required Arguments" argsToUse=arguments.required/>
+    <@defineWorkflowInputs heading="Optional Tool Arguments" argsToUse=arguments.optional/>
+    <@defineWorkflowInputs heading="Optional Common Arguments" argsToUse=arguments.common/>
 
   }
 
@@ -73,6 +82,8 @@ workflow ${name} {
 
         <@callTaskInputs heading="Positional Arguments" argsToUse=arguments.positional/>
         <@callTaskInputs heading="Required Arguments" argsToUse=arguments.required/>
+        <@callTaskInputs heading="Optional Tool Arguments" argsToUse=arguments.optional/>
+        <@callTaskInputs heading="Optional Common Arguments" argsToUse=arguments.common/>
 
   }
 
@@ -93,6 +104,8 @@ task ${name} {
     String bootdisksizegbRequirements
     <@defineTaskInputs heading="Positional Arguments" argsToUse=arguments.positional/>
     <@defineTaskInputs heading="Required Arguments" argsToUse=arguments.required/>
+    <@defineTaskInputs heading="Optional Tool Arguments" argsToUse=arguments.optional/>
+    <@defineTaskInputs heading="Optional Common Arguments" argsToUse=arguments.common/>
 
   }
 
@@ -100,6 +113,8 @@ task ${name} {
     ~{gatk} ${name} \
         <@callTaskCommand heading="Positional Arguments" argsToUse=arguments.positional/>
         <@callTaskCommand heading="Required Arguments" argsToUse=arguments.required/>
+        <@callTaskCommand heading="Optional Tool Arguments" argsToUse=arguments.optional/>
+        <@callTaskCommand heading="Optional Common Arguments" argsToUse=arguments.common/>
 
   >>>
 
