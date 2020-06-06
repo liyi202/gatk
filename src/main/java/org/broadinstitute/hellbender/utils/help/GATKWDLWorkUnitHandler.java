@@ -8,7 +8,7 @@ import org.broadinstitute.barclay.help.DocWorkUnit;
 import org.broadinstitute.barclay.help.HelpDoclet;
 import org.broadinstitute.barclay.help.WDLWorkUnitHandler;
 import org.broadinstitute.hellbender.engine.FeatureInput;
-import org.broadinstitute.hellbender.engine.GATKPathSpecifier;
+import org.broadinstitute.hellbender.engine.GATKPath;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 
 import java.util.*;
@@ -37,7 +37,7 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
                 private static final long serialVersionUID = 1L;
                 {
                     // GATK-specific File Types
-                    put(GATKPathSpecifier.class, new ImmutablePair<>(GATKPathSpecifier.class.getSimpleName(), "File"));
+                    put(GATKPath.class, new ImmutablePair<>(GATKPath.class.getSimpleName(), "File"));
                     // FeatureInputs require special handling to account for the generic type param(s)
                     put(FeatureInput.class, new ImmutablePair<>(FeatureInput.class.getSimpleName(), "File"));
             }
