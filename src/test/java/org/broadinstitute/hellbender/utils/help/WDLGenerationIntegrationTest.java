@@ -32,6 +32,8 @@ public class WDLGenerationIntegrationTest extends CommandLineProgramTest {
         );
     }
 
+    // suppress deprecation warning on Java 11 since we're using deprecated javadoc APIs
+    @SuppressWarnings({"deprecation","removal"})
     @Test
     public static void wdlGenSmokeTest() {
         final File wdlTestTarget = createTempDir("wdlgentest");
