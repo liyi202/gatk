@@ -1,8 +1,8 @@
 {
 <#--- Store positional args in a WDL arg called "positionalArgs"--->
 <#assign positionalArgs="positionalArgs"/>
-  "${name}.dockerImage": "String",
-  "${name}.gatk": "String",
+  "${name}.dockerImage": "broadinstitute/gatk:latest",
+  "${name}.gatk": "gatk",
 <#if runtimeProperties?? && runtimeProperties?size != 0 && runtimeProperties.memoryRequirements != "">
   "${name}.memoryRequirements": "${runtimeProperties.memoryRequirements}",
 <#else>
@@ -29,10 +29,11 @@
   "${name}.bootdisksizegbRequirements": "String",
 </#if>
 
-<#assign remainingArgCount=arguments.required?size + arguments.optional?size + arguments.common?size/>
+<#assign remainingArgCount=arguments.required?size/>
 <@taskinput heading="Positional Arguments" argsToUse=arguments.positional remainingCount=remainingArgCount/>
-<#assign remainingArgCount=arguments.optional?size + arguments.common?size/>
+<#assign remainingArgCount=0/>
 <@taskinput heading="Required Arguments" argsToUse=arguments.required remainingCount=remainingArgCount/>
+
 }
 <#macro taskinput heading argsToUse remainingCount>
   <#if argsToUse?size != 0>
@@ -51,10 +52,10 @@
 <#noparse>"</#noparse>${arg.wdlinputtype}<#noparse>"</#noparse><#if !arg?is_last || remainingCount != 0>,
       </#if>
       <#else>
-        <#if arg.defaultValue == "[]" || arg.defaultValue == "\"\"" || arg.defaultValue == "null">
+        <#if arg.defaultValue == "\"\"" || arg.defaultValue == "null">
 null<#if !arg?is_last || remainingCount != 0>,</#if>
         <#else>
-<#noparse>"</#noparse>${arg.defaultValue}<#noparse>"</#noparse><#if !arg?is_last || remainingCount != 0>,</#if>
+${arg.defaultValue}<#if !arg?is_last || remainingCount != 0>,</#if>
         </#if>
       </#if>
       <#if arg?is_last && remainingCount != 0>

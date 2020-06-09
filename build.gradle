@@ -746,6 +746,11 @@ task gatkTabComplete(type: Javadoc, dependsOn: classes) {
     options.addStringOption("caller-post-arg-max-occurs", "1 1 1 1 1 1 1 1 1 1")
 }
 
+def getWLDInputJSONTestFileNameFromWDLName(File wdlName) {
+    String fileWithoutExt = wdlName.name.take(wdlName.name.lastIndexOf('.'))
+    return new File (wdlName.getParentFile(), fileWithoutExt + "Inputs.json").getAbsolutePath()
+}
+
 // Generate GATK Tool WDL
 task gatkWDLGen(type: Javadoc, dependsOn: classes) {
     final File gatkWDLDir = new File("$docBuildDir/wdlGen")
@@ -762,9 +767,7 @@ task gatkWDLGen(type: Javadoc, dependsOn: classes) {
             into gatkWDLDir
         }
     }
-    // NOTE: For now we don't generate WDL for Picard tools since they're not annotated, so we don't include
-    // the Picard source jar for this task.
-    source = sourceSets.main.allJava
+    source = sourceSets.main.allJava + files(configurations.externalSourceConfiguration.collect { zipTree(it) })
     include '**/*.java'
 
     // The gatkWDLGen process instantiates any documented feature classes, so to run it we need the entire
@@ -784,8 +787,8 @@ task gatkWDLGen(type: Javadoc, dependsOn: classes) {
     options.addStringOption("build-timestamp", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
 }
 
-task gatkWDLGenValidation(dependsOn: gatkWDLGen) {
-    def execWOMToolValidation = { validateWDL ->
+task gatkWDLGenValidation(dependsOn: [gatkWDLGen, shadowJar]) {
+    def execWDLValidation = { validateWDL ->
         println "Executing: $validateWDL"
         try {
             def retCode = validateWDL.execute().waitFor()
@@ -799,19 +802,34 @@ task gatkWDLGenValidation(dependsOn: gatkWDLGen) {
     }
 
     doLast {
-        final wdlGenFolder = "build/docs/wdlgen"
-        def wdlFiles = fileTree(dir: wdlGenFolder)
-        wdlFiles = wdlFiles.filter { f -> !f.getAbsolutePath().endsWith(".html") && !f.getAbsolutePath().endsWith(".json")}
-        return wdlFiles.any() { wdlFile ->
-            //TODO: fix this before submitting
-            // final womtoolLocation = System.env.HOME/womtool.jar
-            final womtoolLocation = "/Users/cnorman/projects/cromwell/womtool/target/scala-2.12/womtool-47-1ce5bbf-SNAP.jar"
+        // first, run the womtool validator
+        final File wdlGenFolder = new File("$docBuildDir/wdlGen")
+        def wdlFiles = fileTree(dir: wdlGenFolder).filter {
+            f -> !f.getAbsolutePath().endsWith(".html") && !f.getAbsolutePath().endsWith(".json")
+        }
+        wdlFiles.any() { wdlFile ->
+            final womtoolLocation = System.getenv('WOMTOOL_JAR')
             final validateWDLCommand = "java -jar $womtoolLocation validate $wdlFile"
-            execWOMToolValidation(validateWDLCommand)
+            execWDLValidation(validateWDLCommand)
+        }
+
+        // now execute the *AllArgs test wdls using cromwell
+        wdlFiles = fileTree(dir: wdlGenFolder).filter {
+            f -> f.getAbsolutePath().endsWith("AllArgsTest.wdl")
+        }
+        wdlFiles.any() { wdlFile ->
+            final cromwellLocation = System.getenv('CROMWELL_JAR')
+            final testInputJSON = getWLDInputJSONTestFileNameFromWDLName(wdlFile)
+            final runWDLCommand = "java -jar $cromwellLocation run --inputs $testInputJSON $wdlFile"
+            // the test JSON input file is populated by the WDL gen process with this dummy file name
+            // to satisfy cromwell's attempt to de/localize input files
+            execWDLValidation("touch dummyWDLTestFile")
+            execWDLValidation(runWDLCommand)
         }
     }
 
 }
+
 
 /**
  *This specifies what artifacts will be built and uploaded when performing a maven upload.

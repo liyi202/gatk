@@ -27,6 +27,8 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
 
     private final static String GATK_FREEMARKER_TEMPLATE_NAME = "wdlToolTemplate.wdl.ftl";
 
+    private final static String dummyWDLTestFileName = "dummyWDLTestFile";
+
     // Map of Java argument types that the WDL generator knows how to convert to a WDL type, along with the
     // corresponding string substitution that needs to be run on the (Barclay-generated) string that describes
     // the type. From a purely string perspective, some of these transforms are no-ops in that no actual
@@ -73,6 +75,56 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
     @Override
     public String getJSONFilename(final DocWorkUnit workUnit) {
         return workUnit.getClazz().getSimpleName() + "Inputs.json";
+    }
+
+    @Override
+    protected String processNamedArgument(
+            final Map<String, Object> argBindings,
+            final NamedArgumentDefinition argDef,
+            final String fieldCommentText) {
+        final String argCategory = super.processNamedArgument(argBindings, argDef, fieldCommentText);
+        final String argType = (String) argBindings.get("type");
+        argBindings.put("testValue",
+                getTestValueFromDefaultValue(
+                        argType,
+                        (String) argBindings.get("defaultValue"))
+        );
+        return argCategory;
+    }
+
+    @Override
+    protected void processPositionalArguments(
+            final CommandLineArgumentParser clp,
+            final Map<String, List<Map<String, Object>>> args) {
+        super.processPositionalArguments(clp, args);
+        final List<Map<String, Object>> positionalArgsList = args.get("positional");
+        if (positionalArgsList != null && !positionalArgsList.isEmpty()) {
+            final Map<String, Object> positionalArgs = args.get("positional").get(0);
+            final String argType = (String) positionalArgs.get("type");
+            positionalArgs.put("testValue",
+                    getTestValueFromDefaultValue(
+                            argType,
+                            (String) positionalArgs.get("defaultValue"))
+            );
+        }
+    }
+
+    final String getTestValueFromDefaultValue(final String wdlType, final String defaultValue) {
+        if (wdlType.equals("File")) {
+            return "\"" + dummyWDLTestFileName + "\"";
+        } else if (wdlType.equals("Array[File]")) {
+            return "[\"" + dummyWDLTestFileName + "\"]";
+        } else if (defaultValue.equals("null")) {
+            return "\"\"";
+        } else if (defaultValue.equals("\"\"")) {
+            return defaultValue;
+        } else if (defaultValue.equals("[]")) {
+            return defaultValue;
+        } else if (defaultValue.startsWith("Array")) {
+            return defaultValue;
+        } else {
+            return "\"" + defaultValue + "\"";
+        }
     }
 
     /**

@@ -86,58 +86,62 @@ public class GATKWDLDoclet extends WDLDoclet {
             final List<Map<String, String>> indexByGroupMaps,
             final List<Map<String, String>> featureMaps)
     {
-        final String defaultWDLFileName = workUnit.getTargetFileName();
-        final String defaultJSONFileName = workUnit.getJSONFileName();
+        final String defaultWDLOutputFileName = workUnit.getTargetFileName();
+        final String defaultJSONOutputFileName = workUnit.getJSONFileName();
 
-        // generate the default WDL and input JSON, containing only required args
-        exportWorkUnit(
+        // generate the default WDL and input JSON, which expose only required args
+        exportWorkUnitTemplate(
                 cfg,
                 workUnit,
                 workUnit.getTemplateName(),
-                new File(getDestinationDir(), defaultWDLFileName));
-
-        // Rather than rely on the default Barclay behavior of creating an arguments JSON file, use a
-        // specialized template for WDL input JSONs to allow more control over the initial values. The
-        // default Barclay arguments JSON doesn't include the (non-tool) WDL inputs, such as runtime
-        // properties, and would provide the initial values for arguments everywhere, but for required
-        // args we want to use a String containing the expected type, like womtool does.
-        exportWorkUnit(
+                new File(getDestinationDir(), defaultWDLOutputFileName));
+        exportWorkUnitTemplate(
                 cfg,
                 workUnit,
                 "wdlJSONTemplate.json.ftl",
-                new File(getDestinationDir(), defaultJSONFileName));
+                new File(getDestinationDir(), defaultJSONOutputFileName));
 
-        // generate a second pair of file containing ALL arguments
-        exportWorkUnit(
+        // generate a second pair of files containing ALL arguments
+        exportWorkUnitTemplate(
                 cfg,
                 workUnit,
                 "wdlToolTemplateAllArgs.wdl.ftl",
-                new File(getDestinationDir(), getNameWithAllArgsSuffix(defaultWDLFileName)));
-
-        // Rather than rely on the default Barclay behavior of creating an arguments JSON file, use a
-        // specialized template for WDL input JSONs to allow more control over the initial values. The
-        // default Barclay arguments JSON doesn't include the (non-tool) WDL inputs, such as runtime
-        // properties, and would provide the initial values for arguments everywhere, but for required
-        // args we want to use a String containing the expected type, like womtool does.
-        exportWorkUnit(
+                new File(getDestinationDir(),
+                        String.format("%sAllArgs.%s",
+                                FilenameUtils.getBaseName(defaultWDLOutputFileName),
+                                FilenameUtils.getExtension(defaultWDLOutputFileName)))
+        );
+        exportWorkUnitTemplate(
                 cfg,
                 workUnit,
                 "wdlJSONTemplateAllArgs.json.ftl",
-                new File(getDestinationDir(), getNameWithAllArgsSuffix(defaultJSONFileName)));
-    }
+                new File(getDestinationDir(),
+                        String.format("%sAllArgsInputs.json",
+                                FilenameUtils.getBaseName(defaultWDLOutputFileName)))
+        );
 
-    /**
-     * Return a a version of the default name passed in with the suffix "AllArgs" added to the basename.
-     *
-     * @param defaultName the default name to modify
-     * @return a version of the default name passed in with the suffix "AllArgs" added to the basename
-     */
-    protected String getNameWithAllArgsSuffix(final String defaultName) {
-        final String baseName = FilenameUtils.getBaseName(defaultName);
-        final String extension = FilenameUtils.getExtension(defaultName);
-        return String.format("%sAllArgs.%s",
-                baseName,
-                extension);
+        // Finally, we need to emit a test WDL and JSON pair for use by the cromwell execution test (which
+        // runs GATK in command line evaluation only mode). The JSON file is primed with dummy values for any
+        // required args. The test WDL specifies no docker image, and has no runtime outputs, since in
+        // command line validation mode no outputs are produced, so otherwise cromwell will fail attempting to
+        // de-localize them.
+        exportWorkUnitTemplate(
+                cfg,
+                workUnit,
+                "wdlToolTemplateAllArgsTest.wdl.ftl",
+                new File(getDestinationDir(),
+                        String.format("%sAllArgsTest.%s",
+                                FilenameUtils.getBaseName(defaultWDLOutputFileName),
+                                FilenameUtils.getExtension(defaultWDLOutputFileName)))
+        );
+        exportWorkUnitTemplate(
+                cfg,
+                workUnit,
+                "wdlJSONTemplateAllArgsTest.json.ftl",
+                new File(getDestinationDir(),
+                        String.format("%sAllArgsTestInputs.json",
+                                FilenameUtils.getBaseName(defaultWDLOutputFileName)))
+        );
     }
 
     /**
@@ -148,7 +152,7 @@ public class GATKWDLDoclet extends WDLDoclet {
      * @param wdlTemplateName name of the template to use
      * @param wdlOutputPath output file
      */
-    protected final void exportWorkUnit(
+    protected final void exportWorkUnitTemplate(
             final Configuration cfg,
             final DocWorkUnit workUnit,
             final String wdlTemplateName,
