@@ -1,6 +1,5 @@
 package org.broadinstitute.hellbender.utils.help;
 
-import com.sun.javadoc.ClassDoc;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -19,6 +18,7 @@ import java.util.Map;
  * by methods that are used by the GATK runtime. This class has a dependency on com.sun.javadoc classes,
  * which may not be present since they're not provided as part of the normal GATK runtime classpath.
  */
+@SuppressWarnings("removal")
 public class GATKWDLDoclet extends WDLDoclet {
 
     // emit an index file with links to all of the .wdl files
@@ -46,7 +46,7 @@ public class GATKWDLDoclet extends WDLDoclet {
 
     //TODO: remove this filter (method overload) once testing on all WDLs is completed
     @Override
-    public boolean includeInDocs(final DocumentedFeature documentedFeature, final ClassDoc classDoc, final Class<?> clazz) {
+    public boolean includeInDocs(final DocumentedFeature documentedFeature, final com.sun.javadoc.ClassDoc classDoc, final Class<?> clazz) {
         // for WDL gen, we want to filter out and DocumentedFeatures that are not CommandLinePrograms
         return //super.includeInDocs(documentedFeature, classDoc, clazz) &&
                 //clazz.getAnnotation(RuntimeProperties.class) != null &&

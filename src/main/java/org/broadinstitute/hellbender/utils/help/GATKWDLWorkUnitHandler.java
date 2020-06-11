@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.utils.help;
 
+import htsjdk.samtools.util.Iso8601Date;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -10,6 +11,7 @@ import org.broadinstitute.barclay.help.WDLWorkUnitHandler;
 import org.broadinstitute.hellbender.engine.FeatureInput;
 import org.broadinstitute.hellbender.engine.GATKPath;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import picard.illumina.parser.ReadStructure;
 
 import java.util.*;
 
@@ -42,7 +44,11 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
                     put(GATKPath.class, new ImmutablePair<>(GATKPath.class.getSimpleName(), "File"));
                     // FeatureInputs require special handling to account for the generic type param(s)
                     put(FeatureInput.class, new ImmutablePair<>(FeatureInput.class.getSimpleName(), "File"));
-            }
+
+                    put(Iso8601Date.class, new ImmutablePair<>(Iso8601Date.class.getSimpleName(), "String"));
+                    put(Date.class, new ImmutablePair<>(Date.class.getSimpleName(), "String"));
+                    put(ReadStructure.class, new ImmutablePair<>(ReadStructure.class.getSimpleName(), "String"));
+                }
         };
 
     public GATKWDLWorkUnitHandler(final HelpDoclet doclet) {
@@ -75,6 +81,37 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
     @Override
     public String getJSONFilename(final DocWorkUnit workUnit) {
         return workUnit.getClazz().getSimpleName() + "Inputs.json";
+    }
+
+    /**
+     * Add the named argument {@code argDed}to the property map if applicable.
+     * @param currentWorkUnit current work unit
+     * @param args the freemarker arg map
+     * @param argDef the arg to add
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void processNamedArgument(
+            final DocWorkUnit currentWorkUnit,
+            final Map<String, List<Map<String, Object>>> args,
+            final NamedArgumentDefinition argDef)
+    {
+        // for WDL gen, we don't want the special args such as --help or --version to show up in the
+        // WDL or JSON input files
+        if (!argDef.getUnderlyingField().getDeclaringClass().equals(SpecialArgumentsCollection.class)) {
+            super.processNamedArgument(currentWorkUnit, args, argDef);
+
+            // now extract any newlines out of the summary since the summary appears in a WDL line comment
+            final List<Map<String, Object>> argMapList = args.get("all");
+            argMapList.stream().forEach(
+                    m -> {
+                        final String actualArgName = (String) m.get("actualArgName");
+                        if (actualArgName != null && actualArgName.equals("--" + argDef.getLongName())) {
+                            final String newSummary = ((String) m.get("summary")).replace('\n', ' ');
+                            m.put("summary", newSummary);
+                        }
+                    });
+        }
     }
 
     @Override
@@ -175,6 +212,21 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
     protected Pair<String, String> transformToWDLType(final Class<?> argumentClass) {
         Pair<String, String> conversion = javaToWDLTypeMap.get(argumentClass);
         return conversion == null ? super.transformToWDLType(argumentClass) : conversion;
+    }
+
+    /**
+     * Given a Java collection class, return a String pair representing the string that should be replaced (the Java type),
+     * and the string to substitute (the corresponding WDL type), i.e., for an argument with type Java List.class,
+     * return the Pair ("List", "Array") to convert from the Java type to the corresponding WDL collection type.
+     * @param argumentCollectionClass collection Class of the argument being converter
+     * @return a String pair representing the original and replacement type text, or null if no conversion is available
+     */
+    @Override
+    protected Pair<String, String> transformToWDLCollectionType(final Class<?> argumentCollectionClass) {
+        // required for Picard LiftoverVcf
+        return argumentCollectionClass.equals(Collection.class) ?
+                new ImmutablePair<>("Collection", "Array"):
+                super.transformToWDLCollectionType(argumentCollectionClass);
     }
 
     /**
