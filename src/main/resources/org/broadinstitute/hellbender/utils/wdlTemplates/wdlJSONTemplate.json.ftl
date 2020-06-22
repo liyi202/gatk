@@ -1,7 +1,7 @@
 {
 <#--- Store positional args in a WDL arg called "positionalArgs"--->
 <#assign positionalArgs="positionalArgs"/>
-  "${name}.dockerImage": "broadinstitute/gatk:latest",
+  "${name}.dockerImage": "broadinstitute/gatk:${version}",
   "${name}.gatk": "gatk",
 <#if runtimeProperties?? && runtimeProperties?size != 0 && runtimeProperties.memoryRequirements != "">
   "${name}.memoryRequirements": "${runtimeProperties.memoryRequirements}",
