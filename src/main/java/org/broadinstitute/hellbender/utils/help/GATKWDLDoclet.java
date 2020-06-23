@@ -5,6 +5,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.io.FilenameUtils;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
+import org.broadinstitute.barclay.argparser.RuntimeProperties;
 import org.broadinstitute.barclay.help.*;
 
 import java.io.*;
@@ -42,15 +43,6 @@ public class GATKWDLDoclet extends WDLDoclet {
     @Override
     public String getIndexTemplateName() {
         return GATK_FREEMARKER_INDEX_TEMPLATE_NAME;
-    }
-
-    //TODO: remove this filter (method overload) once testing on all WDLs is completed
-    @Override
-    public boolean includeInDocs(final DocumentedFeature documentedFeature, final com.sun.javadoc.ClassDoc classDoc, final Class<?> clazz) {
-        // for WDL gen, we want to filter out and DocumentedFeatures that are not CommandLinePrograms
-        return //super.includeInDocs(documentedFeature, classDoc, clazz) &&
-                //clazz.getAnnotation(RuntimeProperties.class) != null &&
-                clazz.getAnnotation(CommandLineProgramProperties.class) != null;
     }
 
     /**
