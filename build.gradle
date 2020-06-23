@@ -785,6 +785,10 @@ task gatkWDLGen(type: Javadoc, dependsOn: classes) {
 
     options.addStringOption("absolute-version", getVersion())
     options.addStringOption("build-timestamp", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+
+    // the wdl doclet will populate the test JSON input files with the name of a dummy
+    // file in this location, in order to satisfy cromwell's attempts to localize inputs and outputs
+    options.addStringOption("build-dir", System.getenv("TRAVIS_BUILD_DIR") ?: ".")
 }
 
 task gatkWDLGenValidation(dependsOn: [gatkWDLGen, shadowJar]) {
@@ -823,7 +827,9 @@ task gatkWDLGenValidation(dependsOn: [gatkWDLGen, shadowJar]) {
             final runWDLCommand = "java -jar $cromwellLocation run --inputs $testInputJSON $wdlFile"
             // the test JSON input file is populated by the WDL gen process with this dummy file name
             // to satisfy cromwell's attempt to de/localize input files
-            execWDLValidation("touch dummyWDLTestFile")
+            def buildDir = System.getenv("TRAVIS_BUILD_DIR") ?: "."
+            final createDummyTestInputFile = "touch $buildDir/dummyWDLTestFile"
+            execWDLValidation(createDummyTestInputFile)
             execWDLValidation(runWDLCommand)
         }
     }

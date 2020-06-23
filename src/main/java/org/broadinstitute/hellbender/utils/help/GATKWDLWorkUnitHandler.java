@@ -29,6 +29,7 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
 
     private final static String GATK_FREEMARKER_TEMPLATE_NAME = "wdlToolTemplate.wdl.ftl";
 
+    // This must be kept in sync with the value used in build.gradle, where the file is created
     private final static String dummyWDLTestFileName = "dummyWDLTestFile";
 
     // Map of Java argument types that the WDL generator knows how to convert to a WDL type, along with the
@@ -122,7 +123,7 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
         final String argCategory = super.processNamedArgument(argBindings, argDef, fieldCommentText);
         final String argType = (String) argBindings.get("type");
         argBindings.put("testValue",
-                getTestValueFromDefaultValue(
+                getInputValueForTest(
                         argType,
                         (String) argBindings.get("defaultValue"))
         );
@@ -139,18 +140,27 @@ public class GATKWDLWorkUnitHandler extends WDLWorkUnitHandler {
             final Map<String, Object> positionalArgs = args.get("positional").get(0);
             final String argType = (String) positionalArgs.get("type");
             positionalArgs.put("testValue",
-                    getTestValueFromDefaultValue(
+                    getInputValueForTest(
                             argType,
                             (String) positionalArgs.get("defaultValue"))
             );
         }
     }
 
-    final String getTestValueFromDefaultValue(final String wdlType, final String defaultValue) {
+    /**
+     * Return a test input value for use in the WDL validation test inputs. If an option has WDL type
+     * File, then we need to provide the name of an actual file that exists so cromwell can localize it.
+     * "dummyWDLTestFileName" is a file that will be created by the test task.
+     * @param wdlType the wdl type for which an input value is needed
+     * @param defaultValue the default value for the argument for which an input value is required
+     * @return a test input value that is either the default value, or the name of an actual test file
+     * that will exist at test execution time
+     */
+    protected String getInputValueForTest(final String wdlType, final String defaultValue) {
         if (wdlType.equals("File")) {
-            return "\"" + dummyWDLTestFileName + "\"";
+            return "\"" + ((GATKWDLDoclet) getDoclet()).getBuildDir() + "/" + dummyWDLTestFileName + "\"";
         } else if (wdlType.equals("Array[File]")) {
-            return "[\"" + dummyWDLTestFileName + "\"]";
+            return "[\"" + ((GATKWDLDoclet) getDoclet()).getBuildDir() + "/" + dummyWDLTestFileName + "\"]";
         } else if (defaultValue.equals("null")) {
             return "\"\"";
         } else if (defaultValue.equals("\"\"")) {
