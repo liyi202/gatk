@@ -221,7 +221,9 @@ public final class AssemblyRegion implements Locatable {
         final AssemblyRegion result = new AssemblyRegion( newActiveSpan, newPaddedSpan, isActive, header );
 
         final List<GATKRead> trimmedReads = reads.stream()
-                .map(read -> ReadClipper.hardClipToRegion(read, newPaddedSpan.getStart(), newPaddedSpan.getEnd()))
+                .map(read -> {GATKRead clipped = ReadClipper.hardClipToRegion(read, newPaddedSpan.getStart(), newPaddedSpan.getEnd());
+                              clipped.setTransientAttribute("originalAlignment", read.getTransientAttribute("originalAlignment"));
+                              return clipped;})
                 .filter(read -> !read.isEmpty() && read.overlaps(result.paddedSpan))
                 .sorted(new ReadCoordinateComparator(header))
                 .collect(Collectors.toList());

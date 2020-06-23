@@ -193,10 +193,12 @@ public class HaplotypeCallerGenotypingEngine extends GenotypingEngine<StandardCa
             if (hcArgs.applyBQD || hcArgs.applyFRD) {
                 if (hcArgs.retainBasedOnOriginalAlignment) {
                 readAlleleLikelihoods.retainEvidence(r -> {GATKRead original = (GATKRead)(r.getTransientAttribute("originalAlignment"));
-                        original = original == null ? r : original;//Reads that were disqualified don't have original alignments (since they weren't ever realigned).
-                        return original.getUnclippedStart() <= original.getUnclippedEnd() && new SimpleInterval(original.getContig(), original.getUnclippedStart(), original.getUnclippedEnd()).overlaps(variantCallingRelevantOverlap);});
+//                        original = original == null ? r : original;//Reads that were disqualified don't have original alignments (since they weren't ever realigned).
+                        return original.getSoftStart() <= original.getSoftEnd() && new SimpleInterval(original.getContig(), original.getSoftStart(), original.getSoftEnd()).overlaps(variantCallingRelevantOverlap);});
                 } else {
-                    readAlleleLikelihoods.retainEvidence(r -> r.getUnclippedStart() <= r.getUnclippedEnd() && new SimpleInterval(r.getContig(), r.getUnclippedStart(), r.getUnclippedEnd()).overlaps(variantCallingRelevantOverlap));
+//                    readAlleleLikelihoods.retainEvidence(r -> ReadClipper.revertSoftClippedBases(r).overlaps(variantCallingRelevantOverlap));
+
+                    readAlleleLikelihoods.retainEvidence(r -> r.getUnclippedStart() <= r.getUnclippedEnd() && new SimpleInterval(r.getContig(), r.getSoftStart(), r.getEnd()).overlaps(variantCallingRelevantOverlap));
                 }
             } else {
                 readAlleleLikelihoods.retainEvidence(r -> r.overlaps(variantCallingRelevantOverlap));
@@ -209,6 +211,17 @@ public class HaplotypeCallerGenotypingEngine extends GenotypingEngine<StandardCa
                 genotyperDebugOutStream.println("\n=============================================================================");
                 genotyperDebugOutStream.println("Event at: " + mergedVC + " with " + readAlleleLikelihoods.evidenceCount() + " reads and "+readAlleleLikelihoods.filteredSampleEvidence(0).size()+" disqualified");
                 genotyperDebugOutStream.println("=============================================================================");
+//                genotyperDebugOutStream.println("Reads:");
+//                List<GATKRead> readsCombined = new ArrayList<>(readAlleleLikelihoods.sampleEvidence(0));
+//                readsCombined.addAll(readAlleleLikelihoods.filteredSampleEvidence(0));
+//                int counter = 0;
+//                for (GATKRead read : readAlleleLikelihoods.sampleEvidence(0)) {
+//                    GATKRead original = (GATKRead)(read.getTransientAttribute("originalAlignment"));
+//                    genotyperDebugOutStream.println("Original Read: "+original+" "+(original==null?"":original.getCigar())+ "    Realigned: "+read+" "+read.getCigar());
+//                    if (original != null && (!original.getCigar().equals(read.getCigar()) || original.getStart() != read.getStart())) {
+//                        genotyperDebugOutStream.println("(realigned)");
+//                    }
+//                }
             }
 
             if (emitReferenceConfidence) {

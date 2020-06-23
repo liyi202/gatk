@@ -133,7 +133,7 @@ public class HaplotypeCallerArgumentCollection extends AssemblyBasedCallerArgume
     public boolean disableSpanningEventGenotyping = false;
     @Advanced
     @Argument(fullName = "use-original-alignments-for-genotyping-overlap", doc = "Rely on original alignments of reads for deciding on overlap when selecting relevant reads for genotyping", optional = true)
-    public boolean retainBasedOnOriginalAlignment = false;
+    public boolean retainBasedOnOriginalAlignment = true;
     @Advanced
     @Argument(fullName = "transform-dragen-mapping-quality", doc = "If enabled this argument will map DRAGEN aligner aligned reads with mapping quality <=250 to scale up to MQ 50", optional = true)
     public boolean transformDRAGENMapQ = false;
